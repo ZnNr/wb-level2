@@ -35,7 +35,7 @@ fatal error: all goroutines are asleep - deadlock!
 */
 func main() {
 	ch := make(chan int)
-	go func() {                   //горутина запускается
+	go func() { //горутина запускается
 		for i := 0; i < 10; i++ { //Горутина отправляет числа 0–9 в канал.
 			ch <- i
 		}
