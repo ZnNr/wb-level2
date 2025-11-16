@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
 /*
 Поиск анаграмм в словаре
 Напишите функцию, которая находит все множества анаграмм по заданному словарю.
@@ -27,3 +33,78 @@ package main
 
 Оценим эффективность: решение должно работать за линейно-логарифмическое время относительно количества слов (допустимо n * m log m, где m — средняя длина слова для сортировки букв).
 */
+
+// normalizeWord приводит слово к каноническому виду для сравнения анаграмм:
+// — переводит в нижний регистр
+// — сортирует буквы
+func normalizeWord(word string) string {
+	// Приводим к нижнему регистру
+	lower := strings.ToLower(word)
+	// Преобразуем в слайс рун для корректной работы с Unicode
+	runes := []rune(lower)
+	// Сортируем руны
+	sort.Slice(runes, func(i, j int) bool {
+		return runes[i] < runes[j]
+	})
+	// Возвращаем как строку
+	return string(runes)
+}
+
+// FindAnagramGroups находит все множества анаграмм в словаре.
+// Возвращает map, где ключ — первое встреченное слово из группы,
+// значение — отсортированный по возрастанию список всех слов в группе.
+// Группы из одного слова исключаются.
+func FindAnagramGroups(words []string) map[string][]string {
+	if len(words) == 0 {
+		return nil
+	}
+
+	// groupsByKey: ключ — нормализованное слово, значение — список оригинальных слов (в нижнем регистре)
+	groupsByKey := make(map[string][]string)
+	// firstOccurrence: запоминаем первое встреченное слово для каждого нормализованного ключа
+	firstOccurrence := make(map[string]string)
+
+	for _, word := range words {
+		if word == "" {
+			continue
+		}
+		lowerWord := strings.ToLower(word)
+		key := normalizeWord(word)
+
+		// Запоминаем первое слово для этого ключа
+		if _, exists := firstOccurrence[key]; !exists {
+			firstOccurrence[key] = lowerWord
+		}
+
+		// Добавляем слово в группу
+		groupsByKey[key] = append(groupsByKey[key], lowerWord)
+	}
+
+	// Формируем результат
+	result := make(map[string][]string)
+
+	for key, group := range groupsByKey {
+		// Пропускаем группы из одного слова
+		if len(group) < 2 {
+			continue
+		}
+
+		// Сортируем слова в группе по возрастанию (лексикографически)
+		sort.Strings(group)
+
+		// Ключ результата — первое встреченное слово (в нижнем регистре)
+		firstWord := firstOccurrence[key]
+		result[firstWord] = group
+	}
+
+	return result
+}
+
+func main() {
+	words := []string{"пятак", "пятка", "тяпка", "листок", "слиток", "столик", "стол"}
+	result := FindAnagramGroups(words)
+	fmt.Println(result)
+	// Вывод (порядок может отличаться):
+	// "пятак": ["пятак", "пятка", "тяпка"]
+	// "листок": ["листок", "слиток", "столик"]
+}
